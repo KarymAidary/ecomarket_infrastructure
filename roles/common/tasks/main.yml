@@ -1,0 +1,30 @@
+- name: setup locale
+  locale_gen: name=en_US.UTF-8 state=present
+  become: true
+
+- name: dev locale
+  command: update-locale LC_ALL=en_US.UTF-8
+  become: true
+
+- name: set default locale
+  become: true
+  lineinfile: dest=/etc/default/locale
+    regexp="LC_ALL"
+    line="LC_ALL=\"en_US.UTF-8\""
+
+- name: Install system packages
+  become: true
+  apt: name={{ item }} update_cache=yes state=installed
+  with_items:
+    - ntp
+    - vim
+    - htop
+    - git
+    - build-essential
+    - libffi-dev
+    - acl
+    - make
+
+- name: Be sure ntp is running
+  become: true
+  service: name=ntp state=started enabled=yes

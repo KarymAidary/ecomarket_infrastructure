@@ -1,0 +1,42 @@
+- name: Added python3 repo
+  become: true
+  apt_repository:
+    repo: "ppa:deadsnakes/ppa"
+
+
+- name: Install required packages
+  become: true
+  apt: name="{{ item }}" update_cache=true state=installed
+  with_items:
+    - python-setuptools
+    - python-dev
+    - python3.5
+    - python3.5-dev
+    - python3-setuptools
+
+- name: Install pip
+  become: true
+  easy_install: name=pip state=latest
+
+- name: Install virtualenv
+  become: true
+  pip: name=virtualenv state=latest
+
+- name: Install pip3
+  become: true
+  easy_install:
+    executable: easy_install3
+    name: pip
+    state: latest
+
+
+- name: Install WeasyPrint
+  become: true
+  apt: name="{{ item }}" update_cache=true state=installed
+  with_items:
+    - python3-lxml
+    - python3-cffi
+    - libcairo2
+    - libpango1.0-0
+    - libgdk-pixbuf2.0-0
+    - shared-mime-info

@@ -1,0 +1,17 @@
+[Unit]
+Description=Serve service
+After=syslog.target
+
+[Service]
+ExecStart=serve -s /opt/itf/hairbrush.com/ui/build
+# Requires systemd version 211 or newer
+RuntimeDirectory=serve
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target

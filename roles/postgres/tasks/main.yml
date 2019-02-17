@@ -1,0 +1,71 @@
+- name: install python-psycopg2
+  become: true
+  apt: name=python-psycopg2 state=installed
+
+- name: setup locale
+  locale_gen: name=en_US.UTF-8 state=present
+  become: true
+
+- name: install postgresql
+  become: true
+  apt: name={{ item }} update_cache=yes state=installed
+  with_items:
+    - postgresql
+    - postgresql-contrib
+
+- name: be sure postgresql is running
+  become: true
+  service: name=postgresql state=started enabled=yes
+
+- name: copy postgresql.conf
+  become: true
+  template:
+    src: postgresql.conf.j2
+    dest: /etc/postgresql/9.5/main/postgresql.conf
+    owner: postgres
+    group: postgres
+    mode: "u=rw,g=r"
+  notify: restart postgresql
+
+- name: create db
+  become: true
+  become_user: postgres
+  postgresql_db:
+    name: "{{ postgres.db }}"
+    encoding: "{{ postgres.encoding }}"
+    lc_collate: "{{ postgres.collate }}"
+    lc_ctype: "{{ postgres.collate }}"
+    template: template0
+
+
+- name: create db user for production
+  become: true
+  become_user: postgres
+  postgresql_user:
+    db: "{{ postgres.db }}"
+    name: "{{ postgres.user }}"
+    password: "{{ postgres.password }}"
+  when: is_development == False
+
+- name: create db user for development and testing
+  become: true
+  become_user: postgres
+  postgresql_user:
+    db: "{{ postgres.db }}"
+    name: "{{ postgres.user }}"
+    password: "{{ postgres.password }}"
+    role_attr_flags: "CREATEDB,CREATEROLE,SUPERUSER"
+  when: is_development
+
+
+
+- name: update pg_hba.conf
+  become: true
+  template:
+    src: pg_hba.conf.j2
+    dest:  /etc/postgresql/9.5/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: "u=rw,g=r"
+  when: (postgres.ip != "127.0.0.1") and (postgres.ip != "localhost")
+  notify: restart postgresql

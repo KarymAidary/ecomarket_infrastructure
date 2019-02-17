@@ -1,0 +1,14 @@
+- hosts: all
+  gather_facts: no
+  vars_files:
+    - "vars/common.yml"
+    - "vars/vagrant.yml"
+  pre_tasks:
+    - name: install python 2.7
+      raw: sudo apt-get -y install python-simplejson
+  roles:
+    - common
+    - postgres
+    - python35
+    - redis
+    - app

@@ -1,0 +1,9 @@
+DJANGO_SECRET_KEY DEFAULT="{{ django_secret_key }}"
+
+SITE_SCHEME={{ site_scheme }}
+ALLOWED_HOSTS DEFAULT="{{ allowed_hosts }}"
+
+
+{% for k,v in app.items() %}
+APP_{{ k|upper }}	DEFAULT={{ v }}
+{% endfor %}

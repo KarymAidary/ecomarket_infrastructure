@@ -1,0 +1,12 @@
+is_development: false
+user: ubuntu
+postgres:
+  ip: 127.0.0.1
+  user: app
+  password: app
+  db: app
+  encoding: UTF-8
+  collate: en_US.UTF-8
+  
+  
+  

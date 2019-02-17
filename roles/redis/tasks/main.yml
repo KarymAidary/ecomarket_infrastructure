@@ -1,0 +1,13 @@
+- name: Added redis repo
+  become: true
+  apt_repository: repo="ppa:chris-lea/redis-server"
+
+
+- name: Install redis server
+  become: true
+  apt: name=redis-server state=installed update_cache=yes
+  notify: restart redis-server
+
+- name: Ensure Redis is started
+  become: true
+  service: name=redis-server state=started enabled=yes

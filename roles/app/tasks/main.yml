@@ -1,0 +1,128 @@
+- name: Create user group
+  become: true
+  group:
+    name: "{{ group }}"
+    state: present
+
+- name: Create user
+  become: true
+  user:
+    name: "{{ user }}"
+    group: "{{ group }}"
+    home: "{{ home }}"
+
+- name: check virtualenv
+  become: true
+  become_user: "{{ user }}"
+  stat: path="{{ project_venv }}/bin/pip"
+  register: virtualenv_path
+
+- name: create virtualenv
+  become: true
+  become_user: "{{ user }}"
+  shell: virtualenv -p /usr/bin/python3.5 "{{ project_venv }}"
+  when:  virtualenv_path.stat.exists == False
+
+
+- name: install prerequisites for requirements
+  become: true
+  apt: name="{{ item }}" state=installed update_cache=yes
+  with_items:
+    - libffi-dev
+
+- name: Update app repository
+  git:
+    repo: "{{ project_repo }}"
+    dest: "{{ app.path }}"
+    accept_hostkey: yes
+    version: "{{ project_repo_branch }}"
+  become: true
+  become_user: "{{ user }}"
+  when: is_development == False
+
+- name: check requirements.txt
+  become: true
+  become_user: "{{ user }}"
+  stat: path="{{ app.app_root }}/requirements.txt"
+  register: requirements
+
+- name: install production requirements
+  become: true
+  become_user: "{{ user }}"
+  pip:
+    executable: "{{ project_venv }}/bin/pip"
+    requirements: "{{ app.app_root }}/requirements.txt"
+  when: requirements.stat.exists
+
+- name: install development requirements
+  become: true
+  become_user: "{{ user }}"
+  pip:
+    executable: "{{ project_venv}}/bin/pip"
+    requirements: "{{ app.app_root }}/requirements.txt"
+  when: (requirements.stat.exists) and (is_development)
+
+- name: create ~/.pam_environments for register env vars
+  become: true
+  become_user: "{{ user }}"
+  template: src=pam_environment.j2 dest="{{ home }}/.pam_environment" mode="0600"
+
+- name: create .env for register env vars
+  become: true
+  become_user: "{{ user }}"
+  template: src=env.j2 dest="{{ app.app_root }}/.env" mode="0644"
+
+- name: create log directory
+  become: true
+  become_user: "{{ user }}"
+  file: path="{{ app.log_dir }}" state=directory
+
+- name: django build static
+  django_manage:
+    command: "collectstatic"
+    app_path: "{{ app.app_root }}"
+    virtualenv: "{{ project_venv }}"
+  become: true
+  become_user: "{{ user }}"
+  when: is_development == False
+
+
+- name: launch django migrations
+  django_manage:
+    command: "migrate"
+    app_path: "{{ app.app_root }}"
+    virtualenv: "{{ project_venv }}"
+  become: true
+  become_user: "{{ user }}"
+  when: is_development == False
+
+
+- name: set acl to access for nginx
+  acl:
+    path: "{{ app.static_root }}"
+    entity: www-data
+    etype: user
+    permissions: rx
+    state: present
+    recursive: yes
+  become: true
+  when: is_development == False
+
+
+- name: create media directory
+  become: true
+  become_user: "{{ user }}"
+  file: path="{{ app.media_root }}" state=directory
+  when: is_development == False
+
+
+- name: set acl to access for nginx
+  acl:
+    path: "{{ app.media_root }}"
+    entity: www-data
+    etype: user
+    permissions: rx
+    state: present
+    recursive: yes
+  become: true
+  when: is_development == False

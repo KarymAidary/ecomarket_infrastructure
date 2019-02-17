@@ -1,0 +1,39 @@
+# provision of development environment
+is_development: true
+
+# local user
+user: ubuntu
+group: ubuntu
+home: /home/ubuntu
+
+# settings of postgres role
+postgres:
+  ip: 0.0.0.0
+  user: hairbrush
+  password: hairbrush
+  db:  hairbrush
+  encoding: UTF-8
+  collate: en_US.UTF-8
+
+project_name: hairbrush
+project_venv: "{{ home }}/.virtualenvs/{{ project_name }}"
+
+site_domain: "hairbrush.com"
+site_name: "hairbrush.com local"
+django_secret_key: "z)ulug5nonn!a&hskgtfas(u@+7_0%exfhx*(g&n($q^*4+m$%"
+
+site_scheme: http
+
+allowed_hosts: "0.0.0.0, localhost, 127.0.0.1"
+
+app:
+  path: "{{ home }}/{{ project_name }}"
+  app_root: "{{ home }}/{{ project_name }}"
+  debug: true
+  is_production: false
+  db_url : postgres://{{ postgres.user }}:{{ postgres.password }}@localhost:5432/{{ postgres.db }}
+  db_engine: django.db.backends.postgresql
+  log_dir: "{{ home }}/{{ project_name }}/log"
+  static_root: "{{ home }}/{{ project_name }}/static"
+  media_root: "{{ home }}/{{ project_name }}/media"
+
